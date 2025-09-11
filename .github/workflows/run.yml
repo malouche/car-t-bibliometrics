@@ -6,7 +6,7 @@ on:
     - cron: "0 2 * * 0"  # Sundays 02:00 UTC
 
 permissions:
-  contents: write  # allow this workflow to push the CSV back to the repo
+  contents: write  # allow this workflow to push the CSV back
 
 jobs:
   build:
@@ -42,17 +42,19 @@ jobs:
           echo "Preview (first 5 lines):"
           head -n 5 data/cart_lymphoma_2009_2025.csv || true
 
-      - name: Commit results
+      - name: Upload CSV as artifact (safety net)
+        uses: actions/upload-artifact@v4
+        with:
+          name: cart_lymphoma_2009_2025
+          path: data/cart_lymphoma_2009_2025.csv
+          if-no-files-found: warn
+
+      - name: Commit results (force add CSV)
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
-          # Show ignore rules (debug)
-          echo "---- .gitignore (if any) ----"
-          [ -f .gitignore ] && cat .gitignore || echo "(no .gitignore)"
-          echo "-----------------------------"
-
-          # Force-add the CSV even if ignored
+          # Force-add the CSV in case it is untracked
           git add -f data/cart_lymphoma_2009_2025.csv
           git status
 
@@ -62,4 +64,3 @@ jobs:
             git commit -m "Update CAR-T lymphoma dataset"
             git push
           fi
-
