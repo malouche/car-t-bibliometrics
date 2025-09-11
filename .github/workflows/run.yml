@@ -49,18 +49,24 @@ jobs:
           path: data/cart_lymphoma_2009_2025.csv
           if-no-files-found: warn
 
-      - name: Commit results (force add CSV)
+      - name: Commit results (force add and push to main)
         run: |
+          set -e
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
-          # Force-add the CSV in case it is untracked
-          git add -f data/cart_lymphoma_2009_2025.csv
-          git status
+          # Make sure we're on a local main branch that tracks origin/main
+          git fetch origin main
+          git checkout -B main origin/main
 
+          # Force-add the CSV (even if new/untracked)
+          git add -f data/cart_lymphoma_2009_2025.csv
+
+          # Commit if there is something staged
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
             git commit -m "Update CAR-T lymphoma dataset"
-            git push
+            # Push directly to main
+            git push origin main
           fi
