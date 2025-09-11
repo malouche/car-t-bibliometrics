@@ -28,10 +28,20 @@ jobs:
           CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
         run: |
           python scripts/collect_cart.py
-
+      - name: Verify CSV presence
+        run: |
+          echo "Listing data directory:"
+          ls -lah data || true
+          echo "Show first lines if file exists:"
+          head -n 5 data/cart_lymphoma_2009_2025.csv || true
       - name: Commit results
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add data/*.csv || true
-          git diff --quiet && echo "No changes to commit." || (git commit -m "Update CAR-T lymphoma dataset" && git push)
+          git add -A data
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Update CAR-T lymphoma dataset"
+            git push
+          fi
