@@ -41,6 +41,8 @@ jobs:
           ls -lah data || true
           echo "Preview (first 5 lines):"
           head -n 5 data/cart_lymphoma_2009_2025.csv || true
+          echo "File size and permissions:"
+          stat data/cart_lymphoma_2009_2025.csv || true
 
       - name: Upload CSV as artifact (safety net)
         uses: actions/upload-artifact@v4
@@ -48,6 +50,17 @@ jobs:
           name: cart_lymphoma_2009_2025
           path: data/cart_lymphoma_2009_2025.csv
           if-no-files-found: warn
+
+      - name: Debug Git status
+        run: |
+          echo "=== Git Status ==="
+          git status
+          echo "=== Files in working directory ==="
+          find . -name "*.csv" -type f
+          echo "=== Git ls-files ==="
+          git ls-files data/
+          echo "=== Checking if file exists ==="
+          test -f data/cart_lymphoma_2009_2025.csv && echo "File exists" || echo "File does not exist"
 
       - name: Commit results (force add and push to main)
         run: |
@@ -59,14 +72,24 @@ jobs:
           git fetch origin main
           git checkout -B main origin/main
 
+          # Check what files exist
+          echo "Current working directory contents:"
+          ls -la data/
+          
           # Force-add the CSV (even if new/untracked)
           git add -f data/cart_lymphoma_2009_2025.csv
-
+          
+          # Debug: show what's staged
+          echo "=== Staged changes ==="
+          git diff --cached --name-status
+          
           # Commit if there is something staged
           if git diff --cached --quiet; then
             echo "No changes to commit."
+            echo "=== Final git status ==="
+            git status
           else
-            git commit -m "Update CAR-T lymphoma dataset"
+            git commit -m "Update CAR-T lymphoma dataset - $(date '+%Y-%m-%d %H:%M:%S UTC')"
             # Push directly to main
             git push origin main
           fi
